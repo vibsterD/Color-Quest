@@ -1,5 +1,7 @@
 package com.example.colorquest.ui
 
+import android.graphics.Bitmap
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -11,11 +13,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import com.example.colorquest.ui.screens.HomeScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ColorQuestApp() {
+fun ColorQuestApp(takePicture: ActivityResultLauncher<Void?>, capturedImageBitmap: Bitmap?) {
     Scaffold(
         topBar = { TopAppBar(
             colors = TopAppBarDefaults.topAppBarColors(
@@ -28,7 +31,7 @@ fun ColorQuestApp() {
             .padding(innerPadding)
             .fillMaxSize()
         ) {
-            HomeScreen(Modifier.fillMaxSize())
+            HomeScreen(takePicture, capturedImageBitmap, Modifier.fillMaxSize())
         }
     }
 }
