@@ -1,6 +1,5 @@
 package com.example.colorquest
 
-import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,12 +12,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.colorquest.ui.ColorQuestApp
 import com.example.colorquest.ui.theme.ColorQuestTheme
+
 
 class MainActivity : ComponentActivity() {
 
@@ -37,8 +36,26 @@ class MainActivity : ComponentActivity() {
 
     }
 
+
+
+//    Uri uri = FileProvider.getUriForFile(this, "com.example.colorquest.fileprovider", file)
+
+
+    val takePicture = registerForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ){success ->
+        if(success) {
+//            capturedImageBitmap = MediaStore.Images.Media.getBitmap(contentResolver, file.toUri())
+//            ImageDecoder.Source source = ImageDecoder.createSource(this.contentResolver, )
+        }else {
+            capturedImageBitmap = null
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+//        applicationContext.createTempUri()
+
         setContent {
             ColorQuestTheme {
                 // A surface container using the 'background' color from the theme
@@ -54,12 +71,9 @@ class MainActivity : ComponentActivity() {
 
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-    }
-
 }
+
+
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
