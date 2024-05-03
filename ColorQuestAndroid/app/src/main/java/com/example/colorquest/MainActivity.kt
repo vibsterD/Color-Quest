@@ -13,9 +13,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.colorquest.ui.ColorQuestApp
 import com.example.colorquest.ui.theme.ColorQuestTheme
 
+
 class MainActivity : ComponentActivity() {
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+//        applicationContext.createTempUri()
+
         setContent {
             ColorQuestTheme {
                 // A surface container using the 'background' color from the theme
@@ -23,13 +29,18 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+//                    SketchInterfaceScreen()
                     ColorQuestApp()
 //                    Greeting("Android")
                 }
             }
         }
+
     }
+
 }
+
+
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {

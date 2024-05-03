@@ -7,20 +7,24 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.example.colorquest.ui.Screen
 
 
 @Composable
-fun HomeScreen(modifier: Modifier) {
+fun HomeScreen(modifier: Modifier, navigateTo: (Screen) -> Unit) {
+
+
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Color Compose!")
-
-        Button(onClick = { /*TODO*/ }) {
-            Text(text = "Snap a pic!")
+        Button(onClick = { navigateTo(Screen.CAMERA_CAPTURE) }) {
+            Text("Capture Image")
         }
-
+        Button(onClick = { navigateTo(Screen.SKETCH_INTERFACE)}) {
+            Text("Sketch Interface")
+        }
     }
 
 }
+

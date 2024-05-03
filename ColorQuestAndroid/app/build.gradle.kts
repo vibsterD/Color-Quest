@@ -89,5 +89,8 @@ dependencies {
     // Kotlin serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
+    // image library
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
 
 }
