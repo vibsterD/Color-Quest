@@ -18,7 +18,7 @@ import com.example.colorquest.ui.screens.HomeScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ColorQuestApp(takePicture: ActivityResultLauncher<Void?>, capturedImageBitmap: Bitmap?) {
+fun ColorQuestApp() {
     Scaffold(
         topBar = { TopAppBar(
             colors = TopAppBarDefaults.topAppBarColors(
@@ -31,7 +31,7 @@ fun ColorQuestApp(takePicture: ActivityResultLauncher<Void?>, capturedImageBitma
             .padding(innerPadding)
             .fillMaxSize()
         ) {
-            HomeScreen(takePicture, capturedImageBitmap, Modifier.fillMaxSize())
+            HomeScreen(Modifier.fillMaxSize())
         }
     }
 }

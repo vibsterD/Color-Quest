@@ -21,36 +21,7 @@ import com.example.colorquest.ui.theme.ColorQuestTheme
 
 class MainActivity : ComponentActivity() {
 
-    var capturedImageBitmap: Bitmap? by mutableStateOf(null)
 
-    val takePicturePreview = registerForActivityResult(
-        ActivityResultContracts.TakePicturePreview()
-    ) { imageBitmap ->
-
-        if (imageBitmap != null) {
-            // success
-            capturedImageBitmap = imageBitmap
-        }else {
-            capturedImageBitmap = null
-        }
-
-    }
-
-
-
-//    Uri uri = FileProvider.getUriForFile(this, "com.example.colorquest.fileprovider", file)
-
-
-    val takePicture = registerForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ){success ->
-        if(success) {
-//            capturedImageBitmap = MediaStore.Images.Media.getBitmap(contentResolver, file.toUri())
-//            ImageDecoder.Source source = ImageDecoder.createSource(this.contentResolver, )
-        }else {
-            capturedImageBitmap = null
-        }
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -63,7 +34,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ColorQuestApp(takePicturePreview, capturedImageBitmap)
+                    ColorQuestApp()
 //                    Greeting("Android")
                 }
             }
