@@ -96,5 +96,7 @@ dependencies {
     // image library
     implementation("io.coil-kt:coil-compose:2.6.0")
 
+    // color picker
+    implementation("com.github.skydoves:colorpicker-compose:1.0.8")
 
 }
