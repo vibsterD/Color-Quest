@@ -8,7 +8,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.colorquest.ui.screens.SketchInterface
-import com.example.colorquest.ui.screens.ViewSavedDrawings
 import com.example.colorquest.ui.theme.ColorQuestTheme
 
 class SketchInterfaceActivity : ComponentActivity() {
