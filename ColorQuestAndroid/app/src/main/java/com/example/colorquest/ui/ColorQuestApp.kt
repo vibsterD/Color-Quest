@@ -41,10 +41,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.colorquest.R
+import com.example.colorquest.SketchInterfaceActivity
 import com.example.colorquest.ViewSavedDrawingsActivity
 import com.example.colorquest.ui.screens.CaptureImageScreen
 import com.example.colorquest.ui.screens.HomeScreen
-import com.example.colorquest.ui.screens.SketchInterfaceScreen
 
 
 // enum for the different screens
@@ -63,34 +63,34 @@ object ColorPalette {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ColorQuestApp() {
-    var currentScreen by remember { mutableStateOf(Screen.HOME) }
-
-
-    Scaffold(
-        topBar = { TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                titleContentColor = MaterialTheme.colorScheme.primary,
-            ),
-            title = { Text(text = "Color Quest") })}
-    ) {innerPadding ->
-        Surface(modifier = Modifier
-            .padding(innerPadding)
-            .fillMaxSize()
-        ) {
-            if (currentScreen == Screen.HOME) {
-                HomeScreen(Modifier.fillMaxSize(), { screen ->  currentScreen = screen})
-            } else if (currentScreen == Screen.SKETCH_INTERFACE) {
-                 SketchInterfaceScreen()
-            } else if (currentScreen == Screen.CAMERA_CAPTURE) {
-                 CaptureImageScreen()
-            }
-
-        }
-    }
-}
+//@Composable
+//fun ColorQuestApp() {
+//    var currentScreen by remember { mutableStateOf(Screen.HOME) }
+//
+//
+//    Scaffold(
+//        topBar = { TopAppBar(
+//            colors = TopAppBarDefaults.topAppBarColors(
+//                containerColor = MaterialTheme.colorScheme.primaryContainer,
+//                titleContentColor = MaterialTheme.colorScheme.primary,
+//            ),
+//            title = { Text(text = "Color Quest") })}
+//    ) {innerPadding ->
+//        Surface(modifier = Modifier
+//            .padding(innerPadding)
+//            .fillMaxSize()
+//        ) {
+//            if (currentScreen == Screen.HOME) {
+//                HomeScreen(Modifier.fillMaxSize(), { screen ->  currentScreen = screen})
+//            } else if (currentScreen == Screen.SKETCH_INTERFACE) {
+//                 SketchInterfaceScreen()
+//            } else if (currentScreen == Screen.CAMERA_CAPTURE) {
+//                 CaptureImageScreen()
+//            }
+//
+//        }
+//    }
+//}
 
 @Composable
 fun ColourQuestApp(context: Context) {
@@ -154,6 +154,11 @@ fun Buttons(font: FontFamily, context: Context) {
         context.startActivity(intent)
     }
 
+    val sketchInterface = {
+        val intent = Intent(context, SketchInterfaceActivity::class.java)
+        context.startActivity(intent)
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -164,7 +169,7 @@ fun Buttons(font: FontFamily, context: Context) {
                 .background(ColorPalette.primaryLight, RoundedCornerShape(8.dp))
         ) {
             Button(
-                onClick = { /* Handle Create New Drawing button click */ },
+                onClick = sketchInterface,
                 modifier = Modifier.padding(horizontal = 16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             ) {
