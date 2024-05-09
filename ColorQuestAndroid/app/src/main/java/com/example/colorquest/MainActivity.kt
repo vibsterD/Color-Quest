@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
 //                    SketchInterfaceScreen()
-                    ColourQuestApp()
+                    ColourQuestApp(context = this@MainActivity)
 //                    Greeting("Android")
                 }
             }

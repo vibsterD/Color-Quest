@@ -1,15 +1,21 @@
 package com.example.colorquest.ui
 
+import android.content.Context
+import android.content.Intent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -27,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.colorquest.R
+import com.example.colorquest.ViewSavedDrawingsActivity
 import com.example.colorquest.ui.screens.CaptureImageScreen
 import com.example.colorquest.ui.screens.HomeScreen
 import com.example.colorquest.ui.screens.SketchInterfaceScreen
@@ -85,7 +93,7 @@ fun ColorQuestApp() {
 }
 
 @Composable
-fun ColourQuestApp() {
+fun ColourQuestApp(context: Context) {
     val font = FontFamily(Font(R.font.adriana))
 
     Scaffold(
@@ -95,17 +103,17 @@ fun ColourQuestApp() {
                     .fillMaxSize()
                     .background(ColorPalette.background)
                     .padding(innerPadding)
-                    .padding(horizontal = 16.dp), // Adjust horizontal padding
+                    .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(), // Fill the width of the screen
-                    verticalArrangement = Arrangement.Center, // Center vertically
-                    horizontalAlignment = Alignment.CenterHorizontally // Center horizontally
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Header(font)
-                    Spacer(modifier = Modifier.height(64.dp)) // Increased spacer height
-                    Buttons(font)
+                    Spacer(modifier = Modifier.height(64.dp))
+                    Buttons(font, context)
                 }
             }
         }
@@ -114,18 +122,38 @@ fun ColourQuestApp() {
 
 @Composable
 fun Header(font: FontFamily) {
-    // Increase the font size
-    Text(
-        text = "Colour Quest",
-        fontFamily = font,
-        fontSize = 100.sp, // Larger font size
-        fontWeight = FontWeight.Bold,
-        color = ColorPalette.primary
-    )
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.logo_colour_book),
+                contentDescription = "Logo",
+                modifier = Modifier.size(80.dp).padding(bottom = 20.dp),
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = "Colour Quest",
+                fontFamily = font,
+                fontSize = 80.sp,
+                fontWeight = FontWeight.Bold,
+                color = ColorPalette.primary
+            )
+        }
+    }
 }
 
+
 @Composable
-fun Buttons(font: FontFamily) {
+fun Buttons(font: FontFamily, context: Context) {
+    val viewSavedDrawings = {
+        val intent = Intent(context, ViewSavedDrawingsActivity::class.java)
+        context.startActivity(intent)
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -143,13 +171,13 @@ fun Buttons(font: FontFamily) {
                 Text(
                     text = "Create New Drawing",
                     fontFamily = font,
-                    fontSize = 48.sp, // Larger font size
+                    fontSize = 48.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White
                 )
             }
         }
-        Spacer(modifier = Modifier.height(32.dp)) // Increased spacer height
+        Spacer(modifier = Modifier.height(32.dp))
         Box(
             modifier = Modifier
                 .padding(vertical = 8.dp)
@@ -157,26 +185,18 @@ fun Buttons(font: FontFamily) {
                 .background(ColorPalette.primaryLight, RoundedCornerShape(8.dp))
         ) {
             Button(
-                onClick = { /* Handle View Saved Drawings button click */ },
+                onClick = viewSavedDrawings,
                 modifier = Modifier.padding(horizontal = 16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             ) {
                 Text(
                     text = "View Saved Drawings",
                     fontFamily = font,
-                    fontSize = 48.sp, // Larger font size
+                    fontSize = 48.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White
                 )
             }
         }
     }
-}
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun ColorQuestAppPreview() {
-    ColourQuestApp()
 }
