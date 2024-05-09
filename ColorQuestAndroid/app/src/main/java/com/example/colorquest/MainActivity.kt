@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.colorquest.ui.ColorQuestApp
+import com.example.colorquest.ui.ColourQuestApp
 import com.example.colorquest.ui.theme.ColorQuestTheme
 
 
@@ -30,7 +31,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
 //                    SketchInterfaceScreen()
-                    ColorQuestApp()
+                    ColourQuestApp()
 //                    Greeting("Android")
                 }
             }
