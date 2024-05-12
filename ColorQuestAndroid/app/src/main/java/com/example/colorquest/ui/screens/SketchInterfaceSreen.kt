@@ -64,6 +64,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
@@ -76,7 +77,6 @@ import coil.transform.Transformation
 import com.example.colorquest.MainActivity
 import com.example.colorquest.R
 import com.example.colorquest.data.ImageEntity
-import com.example.colorquest.data.ImageViewModel
 import com.example.colorquest.ui.ColorPalette
 import com.github.skydoves.colorpicker.compose.ColorEnvelope
 import com.github.skydoves.colorpicker.compose.ColorPickerController
@@ -90,9 +90,7 @@ import java.util.Date
 import kotlin.math.roundToInt
 
 
-// TODO: Implement the ColorPicker
-
-data class BrushPoint(val x: Float, val y: Float, val size: Float, val color: Color)
+data class BrushPoint(val x: Float, val y: Float, val size: Dp, val color: Color)
 
 @Composable
 fun ColorPickerDialog(
@@ -192,7 +190,7 @@ fun DrawingNameDialog(
 }
 
 @Composable
-fun SketchInterface(context: Context, imageViewModel: ImageViewModel) {
+fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel) {
 
     val file = context.createImageFile()
     val uri = FileProvider.getUriForFile(
@@ -251,6 +249,7 @@ fun SketchInterface(context: Context, imageViewModel: ImageViewModel) {
     val coroutineScope = rememberCoroutineScope()
     val showDialog = { drawingNameDialogShown = true }
 
+
     Column(Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
@@ -267,10 +266,12 @@ fun SketchInterface(context: Context, imageViewModel: ImageViewModel) {
                         .onSizeChanged { size = it.toSize() }
                         .drawWithCache {
                             onDrawWithContent {
+                                val canvasHeight = size.height
+                                val canvasWidth = size.width
 
                                 drawContent()
                                 brushPoints.forEach { point ->
-                                    drawCircle(point.color, point.size, Offset(point.x, point.y))
+                                    drawCircle(point.color, point.size.toPx(), Offset(point.x * size.width, point.y * size.height))
                                 }
                             }
                         }
@@ -290,9 +291,9 @@ fun SketchInterface(context: Context, imageViewModel: ImageViewModel) {
                                     y = summed.y.coerceIn(0f, size.height - brushSize.toPx())
                                 )
                                 brushPoints += BrushPoint(
-                                    x = newValue.x,
-                                    y = newValue.y,
-                                    size = brushSize.toPx(),
+                                    x = newValue.x/size.width,
+                                    y = newValue.y/size.height,
+                                    size = brushSize,
                                     color = brushColor
                                 )
                                 offsetX.value = newValue.x
@@ -391,7 +392,7 @@ fun SketchInterface(context: Context, imageViewModel: ImageViewModel) {
                     )
 
                     // Insert imageEntity into the database
-                    imageViewModel.insert(imageEntity)
+                    homeScreenViewModel.insertImage(imageEntity)
                     val intent = Intent(context, MainActivity::class.java)
                     context.startActivity(intent)
                 }

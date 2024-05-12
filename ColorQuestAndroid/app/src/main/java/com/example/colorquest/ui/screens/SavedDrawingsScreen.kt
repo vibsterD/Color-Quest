@@ -42,13 +42,13 @@ import kotlinx.coroutines.launch
 fun ViewSavedDrawings(imageViewModel: ImageViewModel) {
     val font = FontFamily(Font(R.font.adriana))
     val coroutineScope = rememberCoroutineScope()
-    var userImages by remember { mutableStateOf<List<ImageEntity>>(emptyList()) }
-
-    LaunchedEffect(Unit) {
-        coroutineScope.launch {
-            userImages = imageViewModel.getAllImages()
-        }
-    }
+//    var userImages by remember { mutableStateOf<List<ImageEntity>>(emptyList()) }
+//
+//    LaunchedEffect(Unit) {
+//        coroutineScope.launch {
+//            userImages = imageViewModel.getAllImages()
+//        }
+//    }
 
     Scaffold(
         content = { innerPadding ->
