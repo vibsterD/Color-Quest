@@ -13,6 +13,7 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,6 +58,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -188,8 +190,13 @@ fun DrawingNameDialog(
 }
 
 @Composable
-fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, sketch: ImageEntity? = null) {
+
+fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, sketch: ImageEntity? = null, isShake: Boolean = false, OldUri: Uri): Uri {
 //fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel) {
+    var brushPoints by remember { mutableStateOf(listOf<BrushPoint>()) }
+    var capturedImageUri by remember {
+        mutableStateOf<Uri>(Uri.EMPTY)
+    }
 
     val file = context.createImageFile()
     val uri = FileProvider.getUriForFile(
@@ -197,14 +204,54 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
         "${context.packageName}.provider",
         file
     )
-    var capturedImageUri by remember {
-        mutableStateOf<Uri>(Uri.EMPTY)
+
+    Log.d("Outside Uri", uri.toString())
+
+
+    if(isShake){
+        brushPoints = emptyList()
+        if(sketch != null) {
+            capturedImageUri = OldUri
+            Log.d("Inside Uri", uri.toString())
+        }
+    }
+    else {
+        val cameraLauncher =
+            rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
+                capturedImageUri = uri
+            }
+
+        val permissionLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) {
+            if (it) {
+                Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show()
+                cameraLauncher.launch(uri)
+            } else {
+                Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+        DisposableEffect(Unit) {
+            // Check for camera permission when the composable is first composed
+            val permissionCheckResult =
+                ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+            if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
+                cameraLauncher.launch(uri)
+            } else {
+                // Request camera permission
+                permissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+
+            // Clean up if the composable is removed from the composition
+            onDispose { }
+        }
+
+
     }
 
     val offsetX = remember { mutableStateOf(0f) }
     val offsetY = remember { mutableStateOf(0f) }
     var size by remember { mutableStateOf(Size.Zero) }
-    var brushPoints by remember { mutableStateOf(listOf<BrushPoint>()) }
     var brushSize by remember { mutableStateOf(50.dp) }
     val maxBrushSize = 100.dp
     var brushColor: Color by remember { mutableStateOf(Color.Blue) }
@@ -214,7 +261,7 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
     var drawingNameDialogShown by remember { mutableStateOf(false) }
     var drawingName by remember { mutableStateOf("") }
 
-    if(sketch != null) {
+    if(sketch != null && !isShake) {
         DisposableEffect(Unit) {
             capturedImageUri = Uri.parse(sketch.uri)
             drawingName = sketch.drawingName
@@ -259,7 +306,6 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
 
     val coroutineScope = rememberCoroutineScope()
     val showDialog = { drawingNameDialogShown = true }
-
 
     Column(Modifier.fillMaxSize()) {
         Box(
@@ -318,6 +364,7 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
 
                         }
                 ) {
+                    Log.d("Captured Image Uri", capturedImageUri.toString())
                     val painter = rememberImagePainter(
                         data = capturedImageUri,
                         builder = {
@@ -388,6 +435,7 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
                 }
             }
         }
+         return capturedImageUri
     }
 
     if (drawingNameDialogShown) {
@@ -425,6 +473,7 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
             changeColor = { brushColor = it },
             onDismissRequest = { openColorPickerDialog = false })
     }
+    return capturedImageUri
 }
 
 @Composable
