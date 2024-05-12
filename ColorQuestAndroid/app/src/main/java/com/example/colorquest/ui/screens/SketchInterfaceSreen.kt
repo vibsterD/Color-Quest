@@ -5,6 +5,10 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Bitmap.createBitmap
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 import android.net.Uri
 import android.provider.MediaStore
 import android.widget.Toast
@@ -57,7 +61,10 @@ import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.graphics.applyCanvas
 import coil.compose.AsyncImage
+import coil.compose.rememberImagePainter
+import coil.transform.Transformation
 import com.example.colorquest.R
 import com.example.colorquest.ui.ColorPalette
 import com.github.skydoves.colorpicker.compose.ColorEnvelope
@@ -68,6 +75,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.math.roundToInt
+
 
 // TODO: Implement the ColorPicker
 
@@ -192,16 +200,6 @@ fun SketchInterface(context: Context) {
 
 
     Column(Modifier.fillMaxSize()) {
-//        if(capturedImageUri != Uri.EMPTY) {
-//            // display the image
-//            val source = ImageDecoder.createSource(context.contentResolver, capturedImageUri)
-//            val bitmap = ImageDecoder.decodeBitmap(source)
-////            Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captured Image!")
-//
-//            AsyncImage(modifier = Modifier.size(200.dp),
-//                model = capturedImageUri,
-//                contentDescription = "Captured Image!")
-//        }
         Box(
             modifier = Modifier
                 .weight(0.75f)
@@ -252,9 +250,18 @@ fun SketchInterface(context: Context) {
 
                         }
                 ) {
-                    AsyncImage(modifier = Modifier.fillMaxSize(),
-                        model = capturedImageUri,
-                        contentDescription = "Captured Image!")
+                    val painter = rememberImagePainter(
+                        data = capturedImageUri,
+                        builder = {
+                            transformations(GrayscaleTransformation())
+                        }
+                    )
+                    Image(
+                        modifier = Modifier.fillMaxSize(),
+                        painter = painter,
+                        contentDescription = "Captured Image!"
+                    )
+
                     Box(
                         Modifier
                             .offset {
@@ -352,14 +359,39 @@ private fun Context.createImageFile(): File {
     return image
 }
 
-
-
 private fun Uri.toBitmap(contentResolver: ContentResolver): Bitmap? {
     return try {
         MediaStore.Images.Media.getBitmap(contentResolver, this)
     } catch (e: IOException) {
         e.printStackTrace()
         null
+    }
+}
+
+class GrayscaleTransformation() : Transformation {
+
+    override val cacheKey: String = GrayscaleTransformation::class.java.name
+
+    override suspend fun transform(input: Bitmap, size: coil.size.Size): Bitmap {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        paint.colorFilter = COLOR_FILTER
+
+        val output = createBitmap(input.width, input.height, input.config)
+        output.applyCanvas {
+            drawBitmap(input, 0f, 0f, paint)
+        }
+
+        return output
+    }
+
+    override fun equals(other: Any?) = other is GrayscaleTransformation
+
+    override fun hashCode() = javaClass.hashCode()
+
+    override fun toString() = "GrayscaleTransformation()"
+
+    private companion object {
+        val COLOR_FILTER = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
     }
 }
 
