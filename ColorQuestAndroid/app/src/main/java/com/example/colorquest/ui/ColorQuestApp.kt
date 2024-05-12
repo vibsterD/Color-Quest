@@ -165,31 +165,6 @@ fun Header(font: FontFamily) {
 
 @Composable
 fun Buttons(font: FontFamily, context: Context) {
-    val file = context.createImageFile()
-    val uri = FileProvider.getUriForFile(
-        context,
-        "${context.packageName}.provider",
-        file
-    )
-    var capturedImageUri by remember {
-        mutableStateOf<Uri>(Uri.EMPTY)
-    }
-
-    val cameraLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
-            capturedImageUri = uri
-        }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) {
-        if (it) {
-            Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show()
-            cameraLauncher.launch(uri)
-        } else {
-            Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     val viewSavedDrawings = {
         val intent = Intent(context, ViewSavedDrawingsActivity::class.java)
@@ -211,16 +186,8 @@ fun Buttons(font: FontFamily, context: Context) {
                 .background(ColorPalette.primaryLight, RoundedCornerShape(8.dp))
         ) {
             Button(
-                onClick = /**/{
-                    val permissionCheckResult =
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
-                    if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
-                        cameraLauncher.launch(uri)
-                    } else {
-                        // Request a permission
-                        permissionLauncher.launch(Manifest.permission.CAMERA)
-                    }
-                    sketchInterface},
+                onClick =
+                    sketchInterface,
                 modifier = Modifier.padding(horizontal = 16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             ) {
@@ -257,24 +224,4 @@ fun Buttons(font: FontFamily, context: Context) {
     }
 }
 
-private fun Context.createImageFile(): File {
-    // Create an image file name
-    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-    val imageFileName = "JPEG_" + timeStamp + "_"
-    val image = File.createTempFile(
-        imageFileName, /* prefix */
-        ".jpg", /* suffix */
-        externalCacheDir      /* directory */
-    )
-    return image
-}
-
-private fun Uri.toBitmap(contentResolver: ContentResolver): Bitmap? {
-    return try {
-        MediaStore.Images.Media.getBitmap(contentResolver, this)
-    } catch (e: IOException) {
-        e.printStackTrace()
-        null
-    }
-}
 

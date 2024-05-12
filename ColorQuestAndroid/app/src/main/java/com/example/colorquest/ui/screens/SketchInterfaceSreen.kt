@@ -1,6 +1,13 @@
 package com.example.colorquest.ui.screens
 
+import android.content.ContentResolver
 import android.content.Context
+import android.graphics.Bitmap
+import android.net.Uri
+import android.provider.MediaStore
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -48,12 +55,21 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.FileProvider
 import com.example.colorquest.R
 import com.example.colorquest.ui.ColorPalette
 import com.github.skydoves.colorpicker.compose.ColorEnvelope
 import com.github.skydoves.colorpicker.compose.ColorPickerController
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
+import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
 import kotlin.math.roundToInt
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.compose.runtime.DisposableEffect
+import androidx.core.content.ContextCompat
 
 // TODO: Implement the ColorPicker
 
@@ -122,7 +138,49 @@ fun ColorPickerCard(context: Context, changeColor: (Color) -> Unit) {
 }
 
 @Composable
-fun SketchInterface() {
+fun SketchInterface(context: Context) {
+
+    val file = context.createImageFile()
+    val uri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.provider",
+        file
+    )
+    var capturedImageUri by remember {
+        mutableStateOf<Uri>(Uri.EMPTY)
+    }
+
+    val cameraLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
+            capturedImageUri = uri
+        }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        if (it) {
+            Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show()
+            cameraLauncher.launch(uri)
+        } else {
+            Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    DisposableEffect(Unit) {
+        // Check for camera permission when the composable is first composed
+        val permissionCheckResult =
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+        if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
+            cameraLauncher.launch(uri)
+        } else {
+            // Request camera permission
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+
+        // Clean up if the composable is removed from the composition
+        onDispose { }
+    }
+
     val offsetX = remember { mutableStateOf(0f) }
     val offsetY = remember { mutableStateOf(0f) }
     var size by remember { mutableStateOf(Size.Zero) }
@@ -132,6 +190,8 @@ fun SketchInterface() {
     var brushColor: Color by remember { mutableStateOf(Color.Blue) }
     val context = LocalContext.current
     var openColorPickerDialog: Boolean by remember { mutableStateOf(false) }
+
+
 
     Column(Modifier.fillMaxSize()) {
         Box(
@@ -265,6 +325,28 @@ fun CircularIconButton(icon: Int, onClick: () -> Unit) {
             contentDescription = null,
             modifier = Modifier.size(60.dp)
         )
+    }
+}
+
+
+private fun Context.createImageFile(): File {
+    // Create an image file name
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+    val imageFileName = "JPEG_" + timeStamp + "_"
+    val image = File.createTempFile(
+        imageFileName, /* prefix */
+        ".jpg", /* suffix */
+        externalCacheDir      /* directory */
+    )
+    return image
+}
+
+private fun Uri.toBitmap(contentResolver: ContentResolver): Bitmap? {
+    return try {
+        MediaStore.Images.Media.getBitmap(contentResolver, this)
+    } catch (e: IOException) {
+        e.printStackTrace()
+        null
     }
 }
 
