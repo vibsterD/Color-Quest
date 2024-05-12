@@ -1,7 +1,16 @@
 package com.example.colorquest.ui
 
+import android.Manifest
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.net.Uri
+import android.provider.MediaStore
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -40,11 +50,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.example.colorquest.R
 import com.example.colorquest.SketchInterfaceActivity
 import com.example.colorquest.ViewSavedDrawingsActivity
 import com.example.colorquest.ui.screens.CaptureImageScreen
 import com.example.colorquest.ui.screens.HomeScreen
+import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
 
 
 // enum for the different screens
@@ -149,6 +165,32 @@ fun Header(font: FontFamily) {
 
 @Composable
 fun Buttons(font: FontFamily, context: Context) {
+    val file = context.createImageFile()
+    val uri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.provider",
+        file
+    )
+    var capturedImageUri by remember {
+        mutableStateOf<Uri>(Uri.EMPTY)
+    }
+
+    val cameraLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
+            capturedImageUri = uri
+        }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        if (it) {
+            Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show()
+            cameraLauncher.launch(uri)
+        } else {
+            Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val viewSavedDrawings = {
         val intent = Intent(context, ViewSavedDrawingsActivity::class.java)
         context.startActivity(intent)
@@ -169,7 +211,16 @@ fun Buttons(font: FontFamily, context: Context) {
                 .background(ColorPalette.primaryLight, RoundedCornerShape(8.dp))
         ) {
             Button(
-                onClick = sketchInterface,
+                onClick = /**/{
+                    val permissionCheckResult =
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+                    if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
+                        cameraLauncher.launch(uri)
+                    } else {
+                        // Request a permission
+                        permissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                    sketchInterface},
                 modifier = Modifier.padding(horizontal = 16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             ) {
@@ -205,3 +256,25 @@ fun Buttons(font: FontFamily, context: Context) {
         }
     }
 }
+
+private fun Context.createImageFile(): File {
+    // Create an image file name
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+    val imageFileName = "JPEG_" + timeStamp + "_"
+    val image = File.createTempFile(
+        imageFileName, /* prefix */
+        ".jpg", /* suffix */
+        externalCacheDir      /* directory */
+    )
+    return image
+}
+
+private fun Uri.toBitmap(contentResolver: ContentResolver): Bitmap? {
+    return try {
+        MediaStore.Images.Media.getBitmap(contentResolver, this)
+    } catch (e: IOException) {
+        e.printStackTrace()
+        null
+    }
+}
+
