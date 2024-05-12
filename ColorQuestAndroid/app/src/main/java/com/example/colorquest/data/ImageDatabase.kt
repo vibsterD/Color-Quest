@@ -15,13 +15,16 @@ abstract class ImageDatabase : RoomDatabase() {
 
         fun getInstance(context: Context): ImageDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
+                Room.databaseBuilder(
                     context.applicationContext,
                     ImageDatabase::class.java,
                     "image_database"
-                ).build()
-                INSTANCE = instance
-                instance
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
+                    .also {
+                        INSTANCE = it
+                    }
             }
         }
     }
