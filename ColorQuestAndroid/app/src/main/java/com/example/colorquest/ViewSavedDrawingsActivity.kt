@@ -14,15 +14,19 @@ import com.example.colorquest.ui.screens.ViewSavedDrawings
 import com.example.colorquest.ui.theme.ColorQuestTheme
 
 class ViewSavedDrawingsActivity : ComponentActivity() {
+    private lateinit var imageViewModel: ImageViewModel
+    private lateinit var appDatabase: ImageDatabase
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        appDatabase = ImageDatabase.getInstance(applicationContext)
+        imageViewModel = ImageViewModel(appDatabase.imageDao())
         setContent {
             ColorQuestTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ViewSavedDrawings()
+                    ViewSavedDrawings(imageViewModel)
                 }
             }
         }
