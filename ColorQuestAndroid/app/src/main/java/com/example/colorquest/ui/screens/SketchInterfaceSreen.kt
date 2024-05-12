@@ -3,6 +3,7 @@ package com.example.colorquest.ui.screens
 import android.Manifest
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Bitmap.createBitmap
@@ -34,15 +35,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +61,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
@@ -62,14 +69,18 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.graphics.applyCanvas
-import coil.compose.AsyncImage
 import coil.compose.rememberImagePainter
 import coil.transform.Transformation
+import com.example.colorquest.MainActivity
 import com.example.colorquest.R
+import com.example.colorquest.data.ImageEntity
+import com.example.colorquest.data.ImageViewModel
 import com.example.colorquest.ui.ColorPalette
 import com.github.skydoves.colorpicker.compose.ColorEnvelope
 import com.github.skydoves.colorpicker.compose.ColorPickerController
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
+import com.google.gson.Gson
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -144,7 +155,42 @@ fun ColorPickerCard(context: Context, changeColor: (Color) -> Unit) {
 }
 
 @Composable
-fun SketchInterface(context: Context) {
+fun DrawingNameDialog(
+    onNameConfirmed: (String) -> Unit,
+    onDismissRequest: () -> Unit
+) {
+    var drawingName by remember { mutableStateOf(TextFieldValue()) }
+
+    Dialog(onDismissRequest = { onDismissRequest() }) {
+        Card(
+            modifier = Modifier.padding(16.dp),
+            shape = MaterialTheme.shapes.medium,
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Enter drawing name:")
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = drawingName,
+                    onValueChange = {
+                        drawingName = it
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = {
+                    onNameConfirmed(drawingName.text)
+                }) {
+                    Text("Confirm")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SketchInterface(context: Context, imageViewModel: ImageViewModel) {
 
     val file = context.createImageFile()
     val uri = FileProvider.getUriForFile(
@@ -196,8 +242,12 @@ fun SketchInterface(context: Context) {
     var brushColor: Color by remember { mutableStateOf(Color.Blue) }
     val context = LocalContext.current
     var openColorPickerDialog: Boolean by remember { mutableStateOf(false) }
+    var serializedBrushPoints: String by remember { mutableStateOf("") }
+    var drawingNameDialogShown by remember { mutableStateOf(false) }
+    var drawingName by remember { mutableStateOf("") }
 
-
+    val coroutineScope = rememberCoroutineScope()
+    val showDialog = { drawingNameDialogShown = true }
 
     Column(Modifier.fillMaxSize()) {
         Box(
@@ -309,7 +359,9 @@ fun SketchInterface(context: Context) {
                 ) {
                     CircularIconButton(
                         icon = R.drawable.save_icon,
-                        onClick = {}
+                        onClick = {
+                            showDialog()
+                        }
                     )
                     CircularIconButton(
                         icon = R.drawable.color_picker,
@@ -318,6 +370,35 @@ fun SketchInterface(context: Context) {
                 }
             }
         }
+    }
+
+    if (drawingNameDialogShown) {
+        DrawingNameDialog(
+            onNameConfirmed = { name ->
+                drawingName = name
+                drawingNameDialogShown = false
+                coroutineScope.launch {
+                    // Serialize brush points when save button is clicked
+                    serializedBrushPoints = serializeBrushPoints(brushPoints)
+                    // Create ImageEntity with drawing name and other data
+                    val imageEntity = ImageEntity(
+                        uri = capturedImageUri.toString(), // Replace with actual image data
+                        drawingName = drawingName,
+                        lastUpdatedTimestamp = System.currentTimeMillis(),
+                        serializedBrushPoints = serializedBrushPoints
+                    )
+
+                    // Insert imageEntity into the database
+                    imageViewModel.insert(imageEntity)
+                    val intent = Intent(context, MainActivity::class.java)
+                    context.startActivity(intent)
+                }
+            },
+            onDismissRequest = {
+                drawingNameDialogShown = false
+            }
+
+        )
     }
 
     if (openColorPickerDialog) {
@@ -393,6 +474,11 @@ class GrayscaleTransformation() : Transformation {
     private companion object {
         val COLOR_FILTER = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
     }
+}
+
+fun serializeBrushPoints(brushPoints: List<BrushPoint>): String {
+    val gson = Gson()
+    return gson.toJson(brushPoints)
 }
 
 
