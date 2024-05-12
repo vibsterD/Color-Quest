@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.Bitmap.createBitmap
 import android.graphics.Canvas
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
@@ -71,7 +70,6 @@ import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.core.graphics.applyCanvas
 import coil.compose.rememberImagePainter
 import coil.transform.Transformation
 import com.example.colorquest.MainActivity
@@ -190,7 +188,8 @@ fun DrawingNameDialog(
 }
 
 @Composable
-fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel) {
+fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, sketch: ImageEntity? = null) {
+//fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel) {
 
     val file = context.createImageFile()
     val uri = FileProvider.getUriForFile(
@@ -200,37 +199,6 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel) 
     )
     var capturedImageUri by remember {
         mutableStateOf<Uri>(Uri.EMPTY)
-    }
-
-    val cameraLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
-            capturedImageUri = uri
-        }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) {
-        if (it) {
-            Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show()
-            cameraLauncher.launch(uri)
-        } else {
-            Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    DisposableEffect(Unit) {
-        // Check for camera permission when the composable is first composed
-        val permissionCheckResult =
-            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
-        if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
-            cameraLauncher.launch(uri)
-        } else {
-            // Request camera permission
-            permissionLauncher.launch(Manifest.permission.CAMERA)
-        }
-
-        // Clean up if the composable is removed from the composition
-        onDispose { }
     }
 
     val offsetX = remember { mutableStateOf(0f) }
@@ -245,6 +213,49 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel) 
     var serializedBrushPoints: String by remember { mutableStateOf("") }
     var drawingNameDialogShown by remember { mutableStateOf(false) }
     var drawingName by remember { mutableStateOf("") }
+
+    if(sketch != null) {
+        DisposableEffect(Unit) {
+            capturedImageUri = Uri.parse(sketch.uri)
+            drawingName = sketch.drawingName
+            serializedBrushPoints = sketch.serializedBrushPoints
+            brushPoints = Gson().fromJson(serializedBrushPoints, Array<BrushPoint>::class.java).toList()
+            onDispose { }
+        }
+    } else {
+        val cameraLauncher =
+            rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
+                capturedImageUri = uri
+            }
+
+        val permissionLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) {
+            if (it) {
+                Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show()
+                cameraLauncher.launch(uri)
+            } else {
+                Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        DisposableEffect(Unit) {
+            // Check for camera permission when the composable is first composed
+            val permissionCheckResult =
+                ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+            if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
+                cameraLauncher.launch(uri)
+            } else {
+                // Request camera permission
+                permissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+
+            // Clean up if the composable is removed from the composition
+            onDispose { }
+        }
+    }
+
+
 
     val coroutineScope = rememberCoroutineScope()
     val showDialog = { drawingNameDialogShown = true }
@@ -271,7 +282,11 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel) 
 
                                 drawContent()
                                 brushPoints.forEach { point ->
-                                    drawCircle(point.color, point.size.toPx(), Offset(point.x * size.width, point.y * size.height))
+                                    drawCircle(
+                                        point.color,
+                                        point.size.toPx(),
+                                        Offset(point.x * size.width, point.y * size.height)
+                                    )
                                 }
                             }
                         }
@@ -291,8 +306,8 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel) 
                                     y = summed.y.coerceIn(0f, size.height - brushSize.toPx())
                                 )
                                 brushPoints += BrushPoint(
-                                    x = newValue.x/size.width,
-                                    y = newValue.y/size.height,
+                                    x = newValue.x / size.width,
+                                    y = newValue.y / size.height,
                                     size = brushSize,
                                     color = brushColor
                                 )
