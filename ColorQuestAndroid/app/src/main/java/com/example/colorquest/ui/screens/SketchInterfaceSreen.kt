@@ -7,9 +7,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Bitmap.createBitmap
+import android.graphics.Canvas
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
+import android.graphics.Rect
 import android.net.Uri
 import android.provider.MediaStore
 import android.widget.Toast
@@ -303,7 +305,7 @@ fun SketchInterface(context: Context, imageViewModel: ImageViewModel) {
                     val painter = rememberImagePainter(
                         data = capturedImageUri,
                         builder = {
-                            transformations(GrayscaleTransformation())
+                            transformations(GrayscaleTransformationWithEdges())
                         }
                     )
                     Image(
@@ -449,32 +451,85 @@ private fun Uri.toBitmap(contentResolver: ContentResolver): Bitmap? {
     }
 }
 
-class GrayscaleTransformation() : Transformation {
+class GrayscaleTransformationWithEdges : Transformation {
 
-    override val cacheKey: String = GrayscaleTransformation::class.java.name
+    override val cacheKey: String = GrayscaleTransformationWithEdges::class.java.name
 
     override suspend fun transform(input: Bitmap, size: coil.size.Size): Bitmap {
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-        paint.colorFilter = COLOR_FILTER
+        val output = Bitmap.createBitmap(input.width, input.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(output)
 
-        val output = createBitmap(input.width, input.height, input.config)
-        output.applyCanvas {
-            drawBitmap(input, 0f, 0f, paint)
-        }
+        // Convert the input bitmap to grayscale
+        val paint = Paint()
+        val matrix = ColorMatrix()
+        matrix.setSaturation(0f)
+        paint.colorFilter = ColorMatrixColorFilter(matrix)
+        canvas.drawBitmap(input, 0f, 0f, paint)
+
+        // Apply edge detection using Sobel operator
+        val sobel = SobelOperator(input)
+        sobel.apply(43)
+        val edgesBitmap = sobel.getResultBitmap()
+
+        // Overlay edges on the grayscale image
+        canvas.drawBitmap(edgesBitmap, 0f, 0f, null)
 
         return output
     }
 
-    override fun equals(other: Any?) = other is GrayscaleTransformation
+    override fun equals(other: Any?) = other is GrayscaleTransformationWithEdges
 
     override fun hashCode() = javaClass.hashCode()
 
-    override fun toString() = "GrayscaleTransformation()"
+    override fun toString() = "GrayscaleTransformationWithEdges()"
+}
 
-    private companion object {
-        val COLOR_FILTER = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
+class SobelOperator(private val bitmap: Bitmap) {
+    private lateinit var resultBitmap: Bitmap
+
+    fun apply(threshold: Int) {
+        val grayscaleBitmap = toGrayscale(bitmap)
+        val edgeBitmap = Bitmap.createBitmap(grayscaleBitmap.width, grayscaleBitmap.height, Bitmap.Config.ARGB_8888)
+        val sobelX = intArrayOf(-1, 0, 1, -2, 0, 2, -1, 0, 1)
+        val sobelY = intArrayOf(-1, -2, -1, 0, 0, 0, 1, 2, 1)
+
+        for (x in 1 until grayscaleBitmap.width - 1) {
+            for (y in 1 until grayscaleBitmap.height - 1) {
+                var sumX = 0
+                var sumY = 0
+                for (i in 0 until 3) {
+                    for (j in 0 until 3) {
+                        val pixel = grayscaleBitmap.getPixel(x + i - 1, y + j - 1)
+                        val gray = (pixel shr 16 and 0xFF)
+                        sumX += gray * sobelX[i * 3 + j]
+                        sumY += gray * sobelY[i * 3 + j]
+                    }
+                }
+                val magnitude = Math.sqrt((sumX * sumX + sumY * sumY).toDouble()).toInt()
+                val edgePixel = if (magnitude > threshold) 0 else 255 // Thresholding
+                edgeBitmap.setPixel(x, y,
+                    (0xFF000000 or ((edgePixel shl 16).toLong()) or ((edgePixel shl 8).toLong()) or edgePixel.toLong()).toInt()
+                )
+            }
+        }
+
+        resultBitmap = edgeBitmap
+    }
+
+    fun getResultBitmap(): Bitmap {
+        return resultBitmap
+    }
+
+    private fun toGrayscale(bitmap: Bitmap): Bitmap {
+        val grayscaleBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.RGB_565)
+        val canvas = Canvas(grayscaleBitmap)
+        val paint = Paint()
+        val rect = Rect(0, 0, bitmap.width, bitmap.height)
+        canvas.drawBitmap(bitmap, null, rect, paint)
+        return grayscaleBitmap
     }
 }
+
 
 fun serializeBrushPoints(brushPoints: List<BrushPoint>): String {
     val gson = Gson()
