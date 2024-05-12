@@ -1,7 +1,9 @@
 package com.example.colorquest.ui.screens
 
+import android.Manifest
 import android.content.ContentResolver
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.MediaStore
@@ -28,14 +30,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,7 +55,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import coil.compose.AsyncImage
 import com.example.colorquest.R
 import com.example.colorquest.ui.ColorPalette
 import com.github.skydoves.colorpicker.compose.ColorEnvelope
@@ -66,10 +68,6 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.math.roundToInt
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.compose.runtime.DisposableEffect
-import androidx.core.content.ContextCompat
 
 // TODO: Implement the ColorPicker
 
@@ -194,6 +192,16 @@ fun SketchInterface(context: Context) {
 
 
     Column(Modifier.fillMaxSize()) {
+//        if(capturedImageUri != Uri.EMPTY) {
+//            // display the image
+//            val source = ImageDecoder.createSource(context.contentResolver, capturedImageUri)
+//            val bitmap = ImageDecoder.decodeBitmap(source)
+////            Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Captured Image!")
+//
+//            AsyncImage(modifier = Modifier.size(200.dp),
+//                model = capturedImageUri,
+//                contentDescription = "Captured Image!")
+//        }
         Box(
             modifier = Modifier
                 .weight(0.75f)
@@ -209,6 +217,7 @@ fun SketchInterface(context: Context) {
                         .onSizeChanged { size = it.toSize() }
                         .drawWithCache {
                             onDrawWithContent {
+
                                 drawContent()
                                 brushPoints.forEach { point ->
                                     drawCircle(point.color, point.size, Offset(point.x, point.y))
@@ -243,7 +252,9 @@ fun SketchInterface(context: Context) {
 
                         }
                 ) {
-
+                    AsyncImage(modifier = Modifier.fillMaxSize(),
+                        model = capturedImageUri,
+                        contentDescription = "Captured Image!")
                     Box(
                         Modifier
                             .offset {
@@ -340,6 +351,8 @@ private fun Context.createImageFile(): File {
     )
     return image
 }
+
+
 
 private fun Uri.toBitmap(contentResolver: ContentResolver): Bitmap? {
     return try {
