@@ -99,4 +99,7 @@ dependencies {
     // color picker
     implementation("com.github.skydoves:colorpicker-compose:1.0.8")
 
+    // camera
+    implementation("androidx.camera:camera-core:1.3.3")
+
 }
