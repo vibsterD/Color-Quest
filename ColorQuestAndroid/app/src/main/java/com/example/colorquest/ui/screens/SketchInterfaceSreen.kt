@@ -198,56 +198,16 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
         mutableStateOf<Uri>(Uri.EMPTY)
     }
 
+    var showToast by remember { mutableStateOf(false) }
+
     val file = context.createImageFile()
     val uri = FileProvider.getUriForFile(
         context,
         "${context.packageName}.provider",
         file
     )
+    var emptyRequired by remember { mutableStateOf(isShake) }
 
-    Log.d("Outside Uri", uri.toString())
-
-
-    if(isShake){
-        brushPoints = emptyList()
-        if(sketch != null) {
-            capturedImageUri = OldUri
-            Log.d("Inside Uri", uri.toString())
-        }
-    }
-//    else {
-//        val cameraLauncher =
-//            rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
-//                capturedImageUri = uri
-//            }
-//
-//        val permissionLauncher = rememberLauncherForActivityResult(
-//            ActivityResultContracts.RequestPermission()
-//        ) {
-//            if (it) {
-//                Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show()
-//                cameraLauncher.launch(uri)
-//            } else {
-//                Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
-//            }
-//        }
-//        DisposableEffect(Unit) {
-//            // Check for camera permission when the composable is first composed
-//            val permissionCheckResult =
-//                ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
-//            if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
-//                cameraLauncher.launch(uri)
-//            } else {
-//                // Request camera permission
-//                permissionLauncher.launch(Manifest.permission.CAMERA)
-//            }
-//
-//            // Clean up if the composable is removed from the composition
-//            onDispose { }
-//        }
-//
-//
-//    }
 
     val offsetX = remember { mutableStateOf(0f) }
     val offsetY = remember { mutableStateOf(0f) }
@@ -260,55 +220,72 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
     var serializedBrushPoints: String by remember { mutableStateOf("") }
     var drawingNameDialogShown by remember { mutableStateOf(false) }
     var drawingName by remember { mutableStateOf("") }
+    val showDialog = { drawingNameDialogShown = true }
 
-    if(sketch != null) {
-
-
+    if(isShake){
         DisposableEffect(Unit) {
-            capturedImageUri = Uri.parse(sketch.uri)
-            drawingName = sketch.drawingName
-            serializedBrushPoints = sketch.serializedBrushPoints
-            brushPoints = Gson().fromJson(serializedBrushPoints, Array<BrushPoint>::class.java).toList()
+            brushPoints = emptyList()
+            capturedImageUri = OldUri
+            Log.d("Inside Uri", uri.toString())
+
             onDispose { }
         }
-    } else if (!isShake){
-        // First time
-        val cameraLauncher =
-            rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
-                capturedImageUri = uri
+
+    }
+    else {
+        if(sketch != null) {
+            DisposableEffect(Unit) {
+                capturedImageUri = Uri.parse(sketch.uri)
+                drawingName = sketch.drawingName
+                serializedBrushPoints = sketch.serializedBrushPoints
+                brushPoints = Gson().fromJson(serializedBrushPoints, Array<BrushPoint>::class.java).toList()
+                onDispose { }
+            }
+        } else{
+            // First time
+            val cameraLauncher =
+                rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
+                    capturedImageUri = uri
+                }
+
+            val permissionLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) {
+                if (it) {
+                    Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show()
+                    cameraLauncher.launch(uri)
+                } else {
+                    Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
+                }
             }
 
-        val permissionLauncher = rememberLauncherForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) {
-            if (it) {
-                Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show()
-                cameraLauncher.launch(uri)
-            } else {
-                Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
-            }
-        }
+            DisposableEffect(Unit) {
+                // Check for camera permission when the composable is first composed
+                val permissionCheckResult =
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+                if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
+                    cameraLauncher.launch(uri)
+                } else {
+                    // Request camera permission
+                    permissionLauncher.launch(Manifest.permission.CAMERA)
+                }
 
-        DisposableEffect(Unit) {
-            // Check for camera permission when the composable is first composed
-            val permissionCheckResult =
-                ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
-            if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
-                cameraLauncher.launch(uri)
-            } else {
-                // Request camera permission
-                permissionLauncher.launch(Manifest.permission.CAMERA)
+                // Clean up if the composable is removed from the composition
+                onDispose {
+
+                }
             }
 
-            // Clean up if the composable is removed from the composition
-            onDispose { }
+
         }
     }
 
 
 
+
+
     val coroutineScope = rememberCoroutineScope()
-    val showDialog = { drawingNameDialogShown = true }
+
 
     Column(Modifier.fillMaxSize()) {
         Box(
@@ -368,6 +345,10 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
                         }
                 ) {
                     Log.d("Captured Image Uri", capturedImageUri.toString())
+                    if(!isShake && sketch == null && capturedImageUri != Uri.EMPTY && !showToast){
+                        Toast.makeText(context, "Processing image! may take upto 10 seconds", Toast.LENGTH_SHORT).show()
+                        showToast = true
+                    }
                     val painter = rememberImagePainter(
                         data = capturedImageUri,
                         builder = {
@@ -438,7 +419,6 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
                 }
             }
         }
-         return capturedImageUri
     }
 
     if (drawingNameDialogShown) {
@@ -476,6 +456,7 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
             changeColor = { brushColor = it },
             onDismissRequest = { openColorPickerDialog = false })
     }
+
     return capturedImageUri
 }
 
