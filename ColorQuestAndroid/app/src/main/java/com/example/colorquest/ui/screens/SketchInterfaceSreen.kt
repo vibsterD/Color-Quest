@@ -39,6 +39,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -58,7 +59,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -91,6 +91,13 @@ import kotlin.math.roundToInt
 
 
 data class BrushPoint(val x: Float, val y: Float, val size: Dp, val color: Color)
+
+sealed interface LoadingUiState {
+    object Success: LoadingUiState
+    object Error: LoadingUiState
+    object Loading: LoadingUiState
+    object None: LoadingUiState
+}
 
 @Composable
 fun ColorPickerDialog(
@@ -193,6 +200,8 @@ fun DrawingNameDialog(
 
 fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, sketch: ImageEntity? = null, isShake: Boolean = false, OldUri: Uri): Uri {
 //fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel) {
+    var loadingUiState by remember { mutableStateOf<LoadingUiState>(LoadingUiState.None) }
+
     var brushPoints by remember { mutableStateOf(listOf<BrushPoint>()) }
     var capturedImageUri by remember {
         mutableStateOf<Uri>(Uri.EMPTY)
@@ -352,14 +361,18 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
                     val painter = rememberImagePainter(
                         data = capturedImageUri,
                         builder = {
-                            transformations(GrayscaleTransformationWithEdges())
+                            transformations(GrayscaleTransformationWithEdges({loadingUiState = it}))
                         }
                     )
-                    Image(
-                        modifier = Modifier.fillMaxSize(),
-                        painter = painter,
-                        contentDescription = "Captured Image!"
-                    )
+                    if(loadingUiState == LoadingUiState.Loading) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    } else {
+                        Image(
+                            modifier = Modifier.fillMaxSize(),
+                            painter = painter,
+                            contentDescription = "Captured Image!"
+                        )
+                    }
 
                     Box(
                         Modifier
@@ -500,11 +513,12 @@ private fun Uri.toBitmap(contentResolver: ContentResolver): Bitmap? {
     }
 }
 
-class GrayscaleTransformationWithEdges : Transformation {
+class GrayscaleTransformationWithEdges(private val setLoadingUiState: (LoadingUiState) -> Unit) : Transformation {
 
     override val cacheKey: String = GrayscaleTransformationWithEdges::class.java.name
 
     override suspend fun transform(input: Bitmap, size: coil.size.Size): Bitmap {
+        setLoadingUiState(LoadingUiState.Loading)
         val output = Bitmap.createBitmap(input.width, input.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(output)
 
@@ -522,7 +536,7 @@ class GrayscaleTransformationWithEdges : Transformation {
 
         // Overlay edges on the grayscale image
         canvas.drawBitmap(edgesBitmap, 0f, 0f, null)
-
+        setLoadingUiState(LoadingUiState.Success)
         return output
     }
 
