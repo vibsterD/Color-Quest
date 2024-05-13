@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +38,8 @@ import com.example.colorquest.SketchInterfaceActivity
 import com.example.colorquest.data.ImageEntity
 import com.example.colorquest.ui.AppViewModelProvider
 import com.example.colorquest.ui.ColorPalette
+import java.text.SimpleDateFormat
+import java.util.Date
 
 @Composable
 fun ViewSavedDrawings() {
@@ -101,28 +105,42 @@ fun SavedDrawingsGrid(savedSketches: List<ImageEntity>) {
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
-
-
         items(savedSketches.size) { index ->
             val sketch = savedSketches[index]
             val homeScreenViewModel: HomeScreenViewModel = viewModel(factory = AppViewModelProvider.Factory)
 
-
-
-            Box(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
-                    .background(Color.Gray)
                     .clickable {
                         Log.d("SavedDrawingsGrid", "Clicked on sketch: $sketch")
                         sketchInterface(sketch)
                     }
-            )
-            Text(text = sketch.drawingName, fontSize = 24.sp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = sketch.drawingName,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = SimpleDateFormat("dd MMM yyyy").format(Date(sketch.lastUpdatedTimestamp)),
+                            fontSize = 16.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
         }
     }
+
 }
 
 
