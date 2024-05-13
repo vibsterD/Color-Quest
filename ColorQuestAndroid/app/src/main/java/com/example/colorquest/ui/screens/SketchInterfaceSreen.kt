@@ -339,8 +339,8 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
                                 val original = Offset(offsetX.value, offsetY.value)
                                 val summed = original + dragAmount
                                 val newValue = Offset(
-                                    x = summed.x.coerceIn(0f, this.size.width - brushSize.toPx()),
-                                    y = summed.y.coerceIn(0f, this.size.height - brushSize.toPx())
+                                    x = summed.x.coerceIn(0f, this.size.width - brushSize.value),
+                                    y = summed.y.coerceIn(0f, this.size.height - brushSize.value)
                                 )
                                 brushPoints += BrushPoint(
                                     x = newValue.x,
