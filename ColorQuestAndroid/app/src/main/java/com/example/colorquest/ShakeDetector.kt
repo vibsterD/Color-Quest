@@ -19,7 +19,7 @@ class ShakeDetector(private val context: Context) : SensorEventListener {
 
     private var shakeListener: OnShakeListener? = null
 
-    private val shakeThreshold = 4000 // Adjust this value as needed
+    private val shakeThreshold = 1000 // Adjust this value as needed
 
     interface OnShakeListener {
         fun onShake()
