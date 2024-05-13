@@ -2,6 +2,7 @@ package com.example.colorquest
 
 import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,7 +15,6 @@ import com.example.colorquest.ui.AppViewModelProvider
 import com.example.colorquest.ui.screens.HomeScreenViewModel
 import com.example.colorquest.ui.screens.SketchInterface
 import com.example.colorquest.ui.theme.ColorQuestTheme
-import android.widget.Toast
 
 class SketchInterfaceActivity : ComponentActivity(), ShakeDetector.OnShakeListener{
 
@@ -22,6 +22,8 @@ class SketchInterfaceActivity : ComponentActivity(), ShakeDetector.OnShakeListen
     private lateinit var shakeDetector: ShakeDetector
 
     private var imageUri: Uri = Uri.parse("")
+    private var shakeCount: Int = 0
+    private var lastShakeTime = System.currentTimeMillis()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,7 +44,7 @@ class SketchInterfaceActivity : ComponentActivity(), ShakeDetector.OnShakeListen
                     color = MaterialTheme.colorScheme.background
                 ) {
 
-                    imageUri = SketchInterface(this@SketchInterfaceActivity, homesScreenViewModel, sketch, false, imageUri)
+                    imageUri = SketchInterface(this@SketchInterfaceActivity, homesScreenViewModel, sketch, shakeCount, imageUri)
                 }
             }
         }
@@ -60,13 +62,16 @@ class SketchInterfaceActivity : ComponentActivity(), ShakeDetector.OnShakeListen
 
     override fun onShake() {
         Toast.makeText(this, "Phone is being shaken!", Toast.LENGTH_SHORT).show()
+        if (lastShakeTime + 2000 < System.currentTimeMillis()) {
+            shakeCount++
+        }
         setContent {
             ColorQuestTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    SketchInterface(this@SketchInterfaceActivity,  viewModel(factory = AppViewModelProvider.Factory), null, true, imageUri)
+                    SketchInterface(this@SketchInterfaceActivity,  viewModel(factory = AppViewModelProvider.Factory), null, shakeCount, imageUri)
                 }
             }
         }

@@ -49,6 +49,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -68,6 +69,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
@@ -198,11 +200,14 @@ fun DrawingNameDialog(
 
 @Composable
 
-fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, sketch: ImageEntity? = null, isShake: Boolean = false, OldUri: Uri): Uri {
+fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, sketch: ImageEntity? = null, shakeCount: Int = 0, OldUri: Uri): Uri {
 //fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel) {
     var loadingUiState by remember { mutableStateOf<LoadingUiState>(LoadingUiState.None) }
 
     var brushPoints by remember { mutableStateOf(listOf<BrushPoint>()) }
+    var lastShakeCount by remember {
+        mutableIntStateOf(0)
+    }
     var capturedImageUri by remember {
         mutableStateOf<Uri>(Uri.EMPTY)
     }
@@ -215,7 +220,7 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
         "${context.packageName}.provider",
         file
     )
-    var emptyRequired by remember { mutableStateOf(isShake) }
+//    var emptyRequired by remember { mutableStateOf(isShake) }
 
 
     val offsetX = remember { mutableStateOf(0f) }
@@ -231,12 +236,12 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
     var drawingName by remember { mutableStateOf("") }
     val showDialog = { drawingNameDialogShown = true }
 
-    if(isShake){
+    if(lastShakeCount != shakeCount){
         DisposableEffect(Unit) {
             brushPoints = emptyList()
             capturedImageUri = OldUri
             Log.d("Inside Uri", uri.toString())
-
+            lastShakeCount = shakeCount
             onDispose { }
         }
 
@@ -250,7 +255,7 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
                 brushPoints = Gson().fromJson(serializedBrushPoints, Array<BrushPoint>::class.java).toList()
                 onDispose { }
             }
-        } else{
+        } else if (lastShakeCount == 0){
             // First time
             val cameraLauncher =
                 rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
@@ -312,21 +317,18 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
                         .onSizeChanged { size = it.toSize() }
                         .drawWithCache {
                             onDrawWithContent {
-                                val canvasHeight = size.height
-                                val canvasWidth = size.width
 
                                 drawContent()
                                 brushPoints.forEach { point ->
                                     drawCircle(
                                         point.color,
-                                        point.size.toPx(),
-                                        Offset(point.x * size.width, point.y * size.height)
+                                        point.size.value,
+                                        Offset(point.x, point.y)
                                     )
                                 }
                             }
                         }
                         .pointerInput(Unit) {
-
 
                             detectDragGestures(
                                 onDragStart = { offset ->
@@ -337,12 +339,12 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
                                 val original = Offset(offsetX.value, offsetY.value)
                                 val summed = original + dragAmount
                                 val newValue = Offset(
-                                    x = summed.x.coerceIn(0f, size.width - brushSize.toPx()),
-                                    y = summed.y.coerceIn(0f, size.height - brushSize.toPx())
+                                    x = summed.x.coerceIn(0f, this.size.width - brushSize.toPx()),
+                                    y = summed.y.coerceIn(0f, this.size.height - brushSize.toPx())
                                 )
                                 brushPoints += BrushPoint(
-                                    x = newValue.x / size.width,
-                                    y = newValue.y / size.height,
+                                    x = newValue.x,
+                                    y = newValue.y,
                                     size = brushSize,
                                     color = brushColor
                                 )
@@ -354,7 +356,7 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
                         }
                 ) {
                     Log.d("Captured Image Uri", capturedImageUri.toString())
-                    if(!isShake && sketch == null && capturedImageUri != Uri.EMPTY && !showToast){
+                    if((lastShakeCount == shakeCount) && sketch == null && capturedImageUri != Uri.EMPTY && !showToast){
                         Toast.makeText(context, "Processing image! may take upto 10 seconds", Toast.LENGTH_SHORT).show()
                         showToast = true
                     }
@@ -405,7 +407,7 @@ fun SketchInterface(context: Context, homeScreenViewModel: HomeScreenViewModel, 
             ) {
                 Slider(
                     value = brushSize / maxBrushSize,
-                    onValueChange = { brushSize = (it * maxBrushSize.value).dp },
+                    onValueChange = { brushSize = max((it * maxBrushSize.value).dp, 2.dp) },
                     colors = SliderDefaults.colors(
                         thumbColor = Color.Black,
                         activeTrackColor = ColorPalette.primary,
