@@ -11,13 +11,12 @@
 - **View Saved Drawings**: Easily view your saved masterpieces in the gallery.
 - **Continue Coloring**: Pick any saved drawing and continue coloring where you left off.
 
-
 ### :camera: A Peek into the App
 <div align="center">
-    <img src="screenshot1.png" alt="Screenshot 1" width="200" style="margin: 10px;"/>
-    <img src="screenshot2.png" alt="Screenshot 2" width="200" style="margin: 10px;"/>
-    <img src="screenshot3.png" alt="Screenshot 3" width="200" style="margin: 10px;"/>
-    <img src="screenshot4.png" alt="Screenshot 4" width="200" style="margin: 10px;"/>
+    <img src="images/screenshot1.png" alt="Screenshot 1" width="700" style="margin: 60px 0 60px;"/>
+    <img src="images/screenshot2.png" alt="Screenshot 2" width="700" style="margin: 60px 0 60px;"/>
+    <img src="images/screenshot3.png" alt="Screenshot 3" width="700" style="margin: 60px 0 60px;"/>
+    <img src="images/screenshot4.png" alt="Screenshot 4" width="700" style="margin: 60px 0 60px;"/>
 </div>
 
 ## Authors
