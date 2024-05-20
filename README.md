@@ -1,6 +1,6 @@
 # Color Quest
 
-**Colour Quest** is more than just a coloring app—it's a peaceful retreat for your mind. Designed to reduce stress and foster creativity, Color Quest allows you to snap a photo of anything and turn it into a personalized coloring page. With a rich color palette at your fingertips, you can create and save your masterpieces, revisit them, and add more colors whenever you like. If you're not satisfied with your work, simply shake your phone to start over and let your creativity flow anew.
+**Color Quest** is more than just a coloring app—it's a peaceful retreat for your mind. Designed to reduce stress and foster creativity, Color Quest allows you to snap a photo of anything and turn it into a personalized coloring page. With a rich color palette at your fingertips, you can create and save your masterpieces, revisit them, and add more colors whenever you like. If you're not satisfied with your work, simply shake your phone to start over and let your creativity flow anew.
 
 ### :sparkles: Features
 - **Snap Photo to Sketch**: Snap a photo of anything you like and the app will generate a black and white coloring sketch.
@@ -11,15 +11,18 @@
 - **View Saved Drawings**: Easily view your saved masterpieces in the gallery.
 - **Continue Coloring**: Pick any saved drawing and continue coloring where you left off.
 
+
 ### :camera: A Peek into the App
-![Screenshot 1](screenshot1.png)
-![Screenshot 2](screenshot2.png)
-![Screenshot 3](screenshot3.png)
-![Screenshot 4](screenshot4.png)
+<div align="center">
+    <img src="screenshot1.png" alt="Screenshot 1" width="200" style="margin: 10px;"/>
+    <img src="screenshot2.png" alt="Screenshot 2" width="200" style="margin: 10px;"/>
+    <img src="screenshot3.png" alt="Screenshot 3" width="200" style="margin: 10px;"/>
+    <img src="screenshot4.png" alt="Screenshot 4" width="200" style="margin: 10px;"/>
+</div>
 
 ## Authors
-This project was developed by
+This project was developed by:
 * [Diksha Sethi](https://github.com/dikshasethi2511)
-* [Srishti Jain]
-* [Tanishk Goyal]
-* [Vibhu Dubey]
+* Srishti Jain
+* Tanishk Goyal
+* Vibhu Dubey
