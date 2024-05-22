@@ -22,6 +22,6 @@
 ## Authors
 This project was developed by:
 * [Diksha Sethi](https://github.com/dikshasethi2511)
-* Srishti Jain
+* [Srishti Jain](https://github.com/srishti20543)
 * Tanishk Goyal
 * Vibhu Dubey
